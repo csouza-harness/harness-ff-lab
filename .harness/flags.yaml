@@ -1,4 +1,35 @@
 featureFlags:
-  flags: []
+  flags:
+  - flag:
+      name: Mcdonalds Ad
+      identifier: Mcdonalds_Ad
+      description: ""
+      permanent: false
+      spec:
+        type: boolean
+        default:
+          onVariation: "false"
+          offVariation: "false"
+        variations:
+        - identifier: "true"
+          value: "true"
+        - identifier: "false"
+          value: "false"
+      environments:
+      - identifier: dev
+        default:
+          onVariation: "false"
+          offVariation: "false"
+        state: "off"
+      - identifier: prod
+        default:
+          onVariation: "false"
+          offVariation: "false"
+        state: "off"
+      - identifier: staging
+        default:
+          onVariation: "false"
+          offVariation: "false"
+        state: "off"
   projectIdentifier: FF_Demo
   orgIdentifier: default
