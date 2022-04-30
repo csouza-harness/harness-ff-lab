@@ -1,0 +1,12 @@
+connector:
+  name: gke
+  identifier: gke
+  description:
+  orgIdentifier: default
+  projectIdentifier: FF_Demo
+  type: K8sCluster
+  spec:
+    credential:
+      type: InheritFromDelegate
+    delegateSelectors:
+    - mac-desktop
