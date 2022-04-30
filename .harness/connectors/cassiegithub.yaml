@@ -1,0 +1,23 @@
+connector:
+  name: cassie-github
+  identifier: cassiegithub
+  description:
+  orgIdentifier: default
+  projectIdentifier: FF_Demo
+  type: Github
+  spec:
+    url: https://github.com/csouza-harness
+    validationRepo: harness-cie-lab
+    authentication:
+      type: Http
+      spec:
+        type: UsernameToken
+        spec:
+          username: csouza-harness
+          tokenRef: csouzaharness
+    apiAccess:
+      type: Token
+      spec:
+        tokenRef: csouzaharness
+    executeOnDelegate: false
+    type: Account
