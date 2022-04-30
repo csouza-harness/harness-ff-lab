@@ -31,5 +31,26 @@ featureFlags:
           onVariation: "false"
           offVariation: "false"
         state: "off"
+  - flag:
+      name: Git Sync
+      identifier: Git_Sync
+      description: Ebale git sync
+      permanent: false
+      spec:
+        type: boolean
+        default:
+          onVariation: "false"
+          offVariation: "false"
+        variations:
+        - identifier: "true"
+          value: "true"
+        - identifier: "false"
+          value: "false"
+      environments:
+      - identifier: staging
+        default:
+          onVariation: "false"
+          offVariation: "false"
+        state: "off"        
   projectIdentifier: cassiesandbox
   orgIdentifier: default
