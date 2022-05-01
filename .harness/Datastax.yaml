@@ -1,0 +1,312 @@
+pipeline:
+    name: Datastax
+    identifier: Datastax
+    allowStageExecutions: false
+    stages:
+        - stage:
+              name: Rollout Flag
+              identifier: Rollout_Flag
+              description: ""
+              type: FeatureFlag
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollout Flag
+                                identifier: Rollout_Flag
+                                spec:
+                                    feature: <+input>
+                                    environment: dev
+                                    instructions: <+input>
+                                timeout: 10m
+        - stage:
+              name: Deploy to Dev
+              identifier: Deploy_to_Dev
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      serviceRef: nginx
+                      serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                              variables: []
+                              manifests:
+                                  - manifest:
+                                        identifier: nginx
+                                        type: HelmChart
+                                        spec:
+                                            store:
+                                                type: Http
+                                                spec:
+                                                    connectorRef: cassiehelm
+                                            chartName: nginx
+                                            chartVersion: ""
+                                            helmVersion: V3
+                                            skipResourceVersioning: false
+                  infrastructure:
+                      environmentRef: dev
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: gke
+                              namespace: ff
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - stepGroup:
+                                name: Canary Deployment
+                                identifier: canaryDepoyment
+                                steps:
+                                    - step:
+                                          name: Canary Deployment
+                                          identifier: canaryDeployment
+                                          type: K8sCanaryDeploy
+                                          timeout: 10m
+                                          spec:
+                                              instanceSelection:
+                                                  type: Count
+                                                  spec:
+                                                      count: 1
+                                              skipDryRun: false
+                                    - step:
+                                          name: Canary Delete
+                                          identifier: canaryDelete
+                                          type: K8sCanaryDelete
+                                          timeout: 10m
+                                          spec: {}
+                          - stepGroup:
+                                name: Primary Deployment
+                                identifier: Primary_Deployment
+                                steps:
+                                    - step:
+                                          type: K8sRollingDeploy
+                                          name: Rolling Deployment
+                                          identifier: Rolling_Deployment
+                                          spec:
+                                              skipDryRun: false
+                                          timeout: 10m
+                      rollbackSteps:
+                          - step:
+                                name: Canary Delete
+                                identifier: rollbackCanaryDelete
+                                type: K8sCanaryDelete
+                                timeout: 10m
+                                spec: {}
+                          - step:
+                                name: Rolling Rollback
+                                identifier: rollingRollback
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+                  serviceDependencies: []
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback
+              when:
+                  pipelineStatus: Success
+                  condition: <+pipeline.stages.stage[''Rollout Flag'].spec.execution.steps.step.spec.feature> != null
+        - stage:
+              name: Rollback Flag
+              identifier: Rollback_Flag
+              description: ""
+              type: FeatureFlag
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollback Flag
+                                identifier: Rollback_Flag
+                                spec:
+                                    feature: Mcdonalds_Ad
+                                    environment: dev
+                                    instructions:
+                                        - identifier: SetFeatureFlagStateIdentifier
+                                          type: SetFeatureFlagState
+                                          spec:
+                                              state: "on"
+                                timeout: 10m
+        - stage:
+              name: Rollout Flag to Staging
+              identifier: Rollout_Flag_to_QA
+              description: ""
+              type: FeatureFlag
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollout Flag to Staging
+                                identifier: Rollout_Flag_to_Staging
+                                spec:
+                                    feature: Mcdonalds_Ad
+                                    environment: staging
+                                    instructions:
+                                        - identifier: SetFeatureFlagStateIdentifier
+                                          type: SetFeatureFlagState
+                                          spec:
+                                              state: "on"
+                                timeout: 10m
+        - stage:
+              name: Deploy to Staging
+              identifier: Deploy_to_Staging
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      useFromStage:
+                          stage: Deploy_to_Dev
+                  infrastructure:
+                      environmentRef: staging
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: gke
+                              namespace: ff
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - stepGroup:
+                                name: Canary Deployment
+                                identifier: canaryDepoyment
+                                steps:
+                                    - step:
+                                          name: Canary Deployment
+                                          identifier: canaryDeployment
+                                          type: K8sCanaryDeploy
+                                          timeout: 10m
+                                          spec:
+                                              instanceSelection:
+                                                  type: Count
+                                                  spec:
+                                                      count: 1
+                                              skipDryRun: false
+                                    - step:
+                                          name: Canary Delete
+                                          identifier: canaryDelete
+                                          type: K8sCanaryDelete
+                                          timeout: 10m
+                                          spec: {}
+                          - stepGroup:
+                                name: Primary Deployment
+                                identifier: primaryDepoyment
+                                steps:
+                                    - step:
+                                          name: Rolling Deployment
+                                          identifier: rollingDeployment
+                                          type: K8sRollingDeploy
+                                          timeout: 10m
+                                          spec:
+                                              skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Canary Delete
+                                identifier: rollbackCanaryDelete
+                                type: K8sCanaryDelete
+                                timeout: 10m
+                                spec: {}
+                          - step:
+                                name: Rolling Rollback
+                                identifier: rollingRollback
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback
+        - stage:
+              name: Approve Prod Release
+              identifier: Approve_Prod_Release
+              description: ""
+              type: Approval
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                name: Approval
+                                identifier: approval
+                                type: HarnessApproval
+                                timeout: 1d
+                                spec:
+                                    approvalMessage: |-
+                                        Please review the following information
+                                        and approve the pipeline progression
+                                    includePipelineExecutionHistory: true
+                                    approvers:
+                                        minimumCount: 1
+                                        disallowPipelineExecutor: false
+                                        userGroups:
+                                            - account.approvers
+                                    approverInputs: []
+              tags: {}
+        - stage:
+              name: Rollout Flag to Prod
+              identifier: Rollout_Flag_to_Prod
+              description: ""
+              type: FeatureFlag
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollout Flag
+                                identifier: Rollout_Flag
+                                spec:
+                                    environment: prod
+                                    instructions: <+input>
+                                    feature: Mcdonalds_Ad
+                                timeout: 10m
+        - stage:
+              name: Deploy to Prod
+              identifier: Deploy_to_Prod
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      useFromStage:
+                          stage: Deploy_to_Dev
+                  infrastructure:
+                      environmentRef: prod
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: gke
+                              namespace: ff
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - step:
+                                type: K8sCanaryDeploy
+                                name: Canary Deploy
+                                identifier: Canary_Deploy
+                                spec:
+                                    skipDryRun: false
+                                    instanceSelection:
+                                        type: Count
+                                        spec:
+                                            count: 1
+                                timeout: 10m
+                      rollbackSteps: []
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback
+    projectIdentifier: FF_Demo
+    orgIdentifier: default
+    tags: {}
