@@ -20,6 +20,15 @@ pipeline:
                                     environment: dev
                                     instructions: <+input>
                                 timeout: 10m
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback
+              when:
+                  pipelineStatus: Success
+                  condition: <+pipeline.stages.stage['Rollout Flag'].spec.execution.steps.step.spec.feature> != null
         - stage:
               name: Deploy to Dev
               identifier: Deploy_to_Dev
@@ -109,9 +118,6 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
-              when:
-                  pipelineStatus: Success
-                  condition: <+pipeline.stages.stage[''Rollout Flag'].spec.execution.steps.step.spec.feature> != null
         - parallel:
               - stage:
                     name: Rollout Flag to Staging
