@@ -112,48 +112,49 @@ pipeline:
               when:
                   pipelineStatus: Success
                   condition: <+pipeline.stages.stage[''Rollout Flag'].spec.execution.steps.step.spec.feature> != null
-        - stage:
-              name: Rollback Flag
-              identifier: Rollback_Flag
-              description: ""
-              type: FeatureFlag
-              spec:
-                  execution:
-                      steps:
-                          - step:
-                                type: FlagConfiguration
-                                name: Rollback Flag
-                                identifier: Rollback_Flag
-                                spec:
-                                    feature: Mcdonalds_Ad
-                                    environment: dev
-                                    instructions:
-                                        - identifier: SetFeatureFlagStateIdentifier
-                                          type: SetFeatureFlagState
-                                          spec:
-                                              state: "on"
-                                timeout: 10m
-        - stage:
-              name: Rollout Flag to Staging
-              identifier: Rollout_Flag_to_QA
-              description: ""
-              type: FeatureFlag
-              spec:
-                  execution:
-                      steps:
-                          - step:
-                                type: FlagConfiguration
-                                name: Rollout Flag to Staging
-                                identifier: Rollout_Flag_to_Staging
-                                spec:
-                                    feature: Mcdonalds_Ad
-                                    environment: staging
-                                    instructions:
-                                        - identifier: SetFeatureFlagStateIdentifier
-                                          type: SetFeatureFlagState
-                                          spec:
-                                              state: "on"
-                                timeout: 10m
+        - parallel:
+              - stage:
+                    name: Rollout Flag to Staging
+                    identifier: Rollout_Flag_in_Staging
+                    description: ""
+                    type: FeatureFlag
+                    spec:
+                        execution:
+                            steps:
+                                - step:
+                                      type: FlagConfiguration
+                                      name: Rollout Flag to Staging
+                                      identifier: Rollout_Flag_to_Staging
+                                      spec:
+                                          feature: Mcdonalds_Ad
+                                          environment: staging
+                                          instructions:
+                                              - identifier: SetFeatureFlagStateIdentifier
+                                                type: SetFeatureFlagState
+                                                spec:
+                                                    state: "on"
+                                      timeout: 10m
+              - stage:
+                    name: Rollback Flag
+                    identifier: Rollback_Flag_in_Dev
+                    description: ""
+                    type: FeatureFlag
+                    spec:
+                        execution:
+                            steps:
+                                - step:
+                                      type: FlagConfiguration
+                                      name: Rollback Flag
+                                      identifier: Rollback_Flag
+                                      spec:
+                                          feature: Mcdonalds_Ad
+                                          environment: dev
+                                          instructions:
+                                              - identifier: SetFeatureFlagStateIdentifier
+                                                type: SetFeatureFlagState
+                                                spec:
+                                                    state: "off"
+                                      timeout: 10m
         - stage:
               name: Deploy to Staging
               identifier: Deploy_to_Staging
@@ -226,6 +227,45 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+        - parallel:
+              - stage:
+                    name: Rollout Flag to Prod
+                    identifier: Rollout_Flag_to_Prod
+                    description: ""
+                    type: FeatureFlag
+                    spec:
+                        execution:
+                            steps:
+                                - step:
+                                      type: FlagConfiguration
+                                      name: Rollout Flag
+                                      identifier: Rollout_Flag
+                                      spec:
+                                          environment: prod
+                                          instructions: <+input>
+                                          feature: Mcdonalds_Ad
+                                      timeout: 10m
+              - stage:
+                    name: Rollback Flag
+                    identifier: Rollback_Flag_in_Staging
+                    description: ""
+                    type: FeatureFlag
+                    spec:
+                        execution:
+                            steps:
+                                - step:
+                                      type: FlagConfiguration
+                                      name: Rollback Flag
+                                      identifier: Rollback_Flag
+                                      spec:
+                                          feature: Mcdonalds_Ad
+                                          environment: staging
+                                          instructions:
+                                              - identifier: SetFeatureFlagStateIdentifier
+                                                type: SetFeatureFlagState
+                                                spec:
+                                                    state: "off"
+                                      timeout: 10m
         - stage:
               name: Approve Prod Release
               identifier: Approve_Prod_Release
@@ -251,23 +291,6 @@ pipeline:
                                             - account.approvers
                                     approverInputs: []
               tags: {}
-        - stage:
-              name: Rollout Flag to Prod
-              identifier: Rollout_Flag_to_Prod
-              description: ""
-              type: FeatureFlag
-              spec:
-                  execution:
-                      steps:
-                          - step:
-                                type: FlagConfiguration
-                                name: Rollout Flag
-                                identifier: Rollout_Flag
-                                spec:
-                                    environment: prod
-                                    instructions: <+input>
-                                    feature: Mcdonalds_Ad
-                                timeout: 10m
         - stage:
               name: Deploy to Prod
               identifier: Deploy_to_Prod
@@ -307,6 +330,27 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+        - stage:
+              name: Rollback Flag
+              identifier: Rollback_Flag
+              description: ""
+              type: FeatureFlag
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollback Flag
+                                identifier: Rollback_Flag
+                                spec:
+                                    feature: Mcdonalds_Ad
+                                    environment: prod
+                                    instructions:
+                                        - identifier: SetFeatureFlagStateIdentifier
+                                          type: SetFeatureFlagState
+                                          spec:
+                                              state: "off"
+                                timeout: 10m
     projectIdentifier: FF_Demo
     orgIdentifier: default
     tags: {}
