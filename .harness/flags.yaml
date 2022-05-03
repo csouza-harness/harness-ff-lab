@@ -62,5 +62,38 @@ featureFlags:
           onVariation: "false"
           offVariation: "false"
         state: "off"
+  - flag:
+      name: Trial Length
+      identifier: Trial_Length
+      description: ""
+      permanent: false
+      spec:
+        type: string
+        default:
+          onVariation: 7Day_Trial
+          offVariation: 7Day_Trial
+        variations:
+        - identifier: 7Day_Trial
+          value: 7-Day Trial
+        - identifier: 14Day_Trial
+          value: 14-Day Trial
+        - identifier: 21Day_Trial
+          value: 21-Day Trial
+      environments:
+      - identifier: dev
+        default:
+          onVariation: 7Day_Trial
+          offVariation: 7Day_Trial
+        state: "off"
+      - identifier: prod
+        default:
+          onVariation: 7Day_Trial
+          offVariation: 7Day_Trial
+        state: "off"
+      - identifier: staging
+        default:
+          onVariation: 7Day_Trial
+          offVariation: 7Day_Trial
+        state: "off"
   projectIdentifier: FF_Demo
   orgIdentifier: default
