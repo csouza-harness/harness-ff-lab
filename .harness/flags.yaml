@@ -8,7 +8,7 @@ featureFlags:
       spec:
         type: boolean
         default:
-          onVariation: "false"
+          onVariation: "true"
           offVariation: "false"
         variations:
         - identifier: "true"
