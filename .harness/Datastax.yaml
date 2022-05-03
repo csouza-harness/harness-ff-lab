@@ -185,7 +185,7 @@ pipeline:
                         action:
                             type: StageRollback
         - stage:
-              name: Rollout Flag to Prod
+              name: Rollout Builds Module to Prod
               identifier: Rollout_Flag_to_Prod
               description: ""
               type: FeatureFlag
