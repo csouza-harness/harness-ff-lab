@@ -93,7 +93,7 @@ pipeline:
                         action:
                             type: StageRollback
         - stage:
-              name: Rollout Flag
+              name: Rollout Builds Module
               identifier: Rollout_Flag
               description: ""
               type: FeatureFlag
@@ -102,40 +102,24 @@ pipeline:
                       steps:
                           - step:
                                 type: FlagConfiguration
-                                name: Rollout Flag
-                                identifier: Rollout_Flag
+                                name: Rollout Builds Module Flag
+                                identifier: Rollout_Builds_Module_Flag
                                 spec:
-                                    feature: <+input>
                                     environment: dev
-                                    instructions: <+input>
+                                    feature: Builds_Module
+                                    instructions:
+                                        - identifier: SetFeatureFlagStateIdentifier
+                                          type: SetFeatureFlagState
+                                          spec:
+                                              state: "on"
                                 timeout: 10m
+                  serviceDependencies: []
               failureStrategies:
                   - onFailure:
                         errors:
                             - AllErrors
                         action:
                             type: StageRollback
-        - stage:
-              name: Rollback Flag
-              identifier: Rollback_Flag_in_Dev
-              description: ""
-              type: FeatureFlag
-              spec:
-                  execution:
-                      steps:
-                          - step:
-                                type: FlagConfiguration
-                                name: Rollback Flag
-                                identifier: Rollback_Flag
-                                spec:
-                                    feature: Mcdonalds_Ad
-                                    environment: dev
-                                    instructions:
-                                        - identifier: SetFeatureFlagStateIdentifier
-                                          type: SetFeatureFlagState
-                                          spec:
-                                              state: "off"
-                                timeout: 10m
         - stage:
               name: Approve Prod Release
               identifier: Approve_Prod_Release
@@ -210,13 +194,103 @@ pipeline:
                       steps:
                           - step:
                                 type: FlagConfiguration
-                                name: Rollout Flag
-                                identifier: Rollout_Flag
+                                name: Rollout to Beta Users
+                                identifier: Rollout_to_Beta_Users
                                 spec:
                                     environment: prod
-                                    instructions: <+input>
-                                    feature: Mcdonalds_Ad
+                                    feature: Builds_Module
+                                    instructions:
+                                        - identifier: SetVariationForGroup
+                                          type: AddSegmentToVariationTargetMap
+                                          spec:
+                                              variation: "true"
+                                              segments:
+                                                  - Beta_Users
                                 timeout: 10m
+                          - step:
+                                type: HarnessApproval
+                                name: Verify Beta Rollout
+                                identifier: Verify_Beta_Rollout
+                                spec:
+                                    approvalMessage: Please review the following information and approve the pipeline progression
+                                    includePipelineExecutionHistory: true
+                                    approvers:
+                                        userGroups:
+                                            - account.approvers
+                                        minimumCount: 1
+                                        disallowPipelineExecutor: false
+                                    approverInputs: []
+                                timeout: 1d
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollout 25 Percent to All Users
+                                identifier: Rollout_25_Percent_to_All_Users
+                                spec:
+                                    feature: Builds_Module
+                                    environment: prod
+                                    instructions:
+                                        - identifier: AddRuleIdentifier
+                                          type: AddRule
+                                          spec:
+                                              priority: 100
+                                              distribution:
+                                                  clauses:
+                                                      - op: segmentMatch
+                                                        attribute: ""
+                                                  variations:
+                                                      - variation: "true"
+                                                        weight: 25
+                                                      - variation: "false"
+                                                        weight: 75
+                                                  bucketBy: identifier
+                                timeout: 10m
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollout 50 Percent To All Users
+                                identifier: Rollout_50_Percent_To_All_Users
+                                spec:
+                                    feature: Builds_Module
+                                    environment: prod
+                                    instructions:
+                                        - identifier: AddRuleIdentifier
+                                          type: AddRule
+                                          spec:
+                                              priority: 100
+                                              distribution:
+                                                  clauses:
+                                                      - op: segmentMatch
+                                                        attribute: ""
+                                                  variations:
+                                                      - variation: "true"
+                                                        weight: 50
+                                                      - variation: "false"
+                                                        weight: 50
+                                                  bucketBy: identifier
+                                timeout: 10m
+                          - step:
+                                type: FlagConfiguration
+                                name: Rollout to 100 Percent of Users
+                                identifier: Rollout_to_100_Percent_of_Users
+                                spec:
+                                    feature: Builds_Module
+                                    environment: dev
+                                    instructions:
+                                        - identifier: AddRuleIdentifier
+                                          type: AddRule
+                                          spec:
+                                              priority: 100
+                                              distribution:
+                                                  clauses:
+                                                      - op: segmentMatch
+                                                        attribute: ""
+                                                  variations:
+                                                      - variation: "true"
+                                                        weight: 100
+                                                      - variation: "false"
+                                                        weight: 0
+                                                  bucketBy: identifier
+                                timeout: 10m
+                  serviceDependencies: []
     projectIdentifier: FF_Demo
     orgIdentifier: default
     tags: {}
