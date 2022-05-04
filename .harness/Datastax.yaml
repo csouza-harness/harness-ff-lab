@@ -106,12 +106,8 @@ pipeline:
                                 identifier: Rollout_Builds_Module_Flag
                                 spec:
                                     environment: dev
-                                    feature: Builds_Module
-                                    instructions:
-                                        - identifier: SetFeatureFlagStateIdentifier
-                                          type: SetFeatureFlagState
-                                          spec:
-                                              state: "on"
+                                    feature: <+input>
+                                    instructions: <+input>
                                 timeout: 10m
                   serviceDependencies: []
               failureStrategies:
