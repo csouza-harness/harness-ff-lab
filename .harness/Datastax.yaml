@@ -271,20 +271,10 @@ pipeline:
                                     feature: Builds_Module
                                     environment: dev
                                     instructions:
-                                        - identifier: AddRuleIdentifier
-                                          type: AddRule
+                                        - identifier: SetFeatureFlagStateIdentifier
+                                          type: SetFeatureFlagState
                                           spec:
-                                              priority: 100
-                                              distribution:
-                                                  clauses:
-                                                      - op: segmentMatch
-                                                        attribute: ""
-                                                  variations:
-                                                      - variation: "true"
-                                                        weight: 100
-                                                      - variation: "false"
-                                                        weight: 0
-                                                  bucketBy: identifier
+                                              state: "on"
                                 timeout: 10m
                   serviceDependencies: []
     projectIdentifier: FF_Demo
