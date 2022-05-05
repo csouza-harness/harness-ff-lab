@@ -9,7 +9,7 @@ featureFlags:
         type: boolean
         default:
           onVariation: "true"
-          offVariation: "false"
+          offVariation: "true"
         variations:
         - identifier: "true"
           value: "true"
