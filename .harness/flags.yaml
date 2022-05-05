@@ -38,8 +38,8 @@ featureFlags:
             - Harness_Users
       - identifier: prod
         default:
-          onVariation: "false"
-          offVariation: "false"
+          onVariation: "true"
+          offVariation: "true"
         state: "off"
       - identifier: staging
         default:
