@@ -106,8 +106,28 @@ pipeline:
                                 identifier: Rollout_Builds_Module_Flag
                                 spec:
                                     environment: dev
-                                    feature: <+input>
-                                    instructions: <+input>
+                                    feature: Builds_Module
+                                    instructions:
+                                        - identifier: SetFeatureFlagStateIdentifier
+                                          type: SetFeatureFlagState
+                                          spec:
+                                              state: "on"
+                                        - identifier: AddRuleIdentifier
+                                          type: AddRule
+                                          spec:
+                                              priority: 100
+                                              distribution:
+                                                  clauses:
+                                                      - op: segmentMatch
+                                                        attribute: ""
+                                                        values:
+                                                            - Harness_Users
+                                                  variations:
+                                                      - variation: "true"
+                                                        weight: 50
+                                                      - variation: "false"
+                                                        weight: 50
+                                                  bucketBy: identifier
                                 timeout: 10m
                   serviceDependencies: []
               failureStrategies:
